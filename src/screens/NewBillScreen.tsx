@@ -224,7 +224,6 @@ export default function NewBillScreen({
         createdAt: serverTimestamp(),
       });
 
-      Alert.alert('Success', 'Bill saved successfully.');
       onBack();
     } catch (error: any) {
       Alert.alert('Error', error?.message || 'Failed to save bill.');

@@ -60,7 +60,6 @@ export default function AuthScreen() {
 
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email.trim(), password);
-        Alert.alert('Success', 'Logged in successfully.');
       } else {
         const userCredential = await createUserWithEmailAndPassword(
             auth,
@@ -75,8 +74,6 @@ export default function AuthScreen() {
             email: email.trim(),
             createdAt: serverTimestamp(),
           });
-          
-          Alert.alert('Success', 'Account created successfully.');
       }
 
       resetForm();

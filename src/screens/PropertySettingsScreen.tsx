@@ -1,12 +1,12 @@
 import { doc, updateDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { db } from '../../firebaseConfig';
 
@@ -41,7 +41,6 @@ export default function PropertySettingsScreen({
         vatRate: vat ? Number(vat) : null,
       });
 
-      Alert.alert('Saved', 'Property settings updated');
       onBack();
     } catch (error) {
       Alert.alert('Error', 'Failed to update property');

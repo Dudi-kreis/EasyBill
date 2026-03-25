@@ -122,7 +122,6 @@ export default function CreatePropertyScreen({
         createdAt: serverTimestamp(),
       });
 
-      Alert.alert('Success', 'Property created successfully.');
       onCreated();
     } catch (error: any) {
       Alert.alert('Error', error?.message || 'Failed to create property.');
