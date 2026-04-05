@@ -1,21 +1,32 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
+import { AppLanguage, setAppLanguage } from '../i18n';
 
 export default function AuthScreen() {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language.startsWith('he') ? 'he' : 'en';
+
+  const handleLanguage = async (lng: AppLanguage) => {
+    if (lng === currentLang) {
+      return;
+    }
+    await setAppLanguage(lng);
+  };
   const [isLogin, setIsLogin] = useState(true);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -30,22 +41,22 @@ export default function AuthScreen() {
 
   const validateForm = () => {
     if (!email.trim()) {
-      Alert.alert('Missing email', 'Please enter your email.');
+      Alert.alert(t('auth.missingEmailTitle'), t('auth.missingEmailBody'));
       return false;
     }
 
     if (!password.trim()) {
-      Alert.alert('Missing password', 'Please enter your password.');
+      Alert.alert(t('auth.missingPasswordTitle'), t('auth.missingPasswordBody'));
       return false;
     }
 
     if (!isLogin && !fullName.trim()) {
-      Alert.alert('Missing full name', 'Please enter your full name.');
+      Alert.alert(t('auth.missingFullNameTitle'), t('auth.missingFullNameBody'));
       return false;
     }
 
     if (password.length < 6) {
-      Alert.alert('Weak password', 'Password must be at least 6 characters.');
+      Alert.alert(t('auth.weakPasswordTitle'), t('auth.weakPasswordBody'));
       return false;
     }
 
@@ -62,44 +73,44 @@ export default function AuthScreen() {
         await signInWithEmailAndPassword(auth, email.trim(), password);
       } else {
         const userCredential = await createUserWithEmailAndPassword(
-            auth,
-            email.trim(),
-            password
-          );
-          
-          const user = userCredential.user;
-          
-          await setDoc(doc(db, 'users', user.uid), {
-            fullName: fullName.trim(),
-            email: email.trim(),
-            createdAt: serverTimestamp(),
-          });
+          auth,
+          email.trim(),
+          password
+        );
+
+        const user = userCredential.user;
+
+        await setDoc(doc(db, 'users', user.uid), {
+          fullName: fullName.trim(),
+          email: email.trim(),
+          createdAt: serverTimestamp(),
+        });
       }
 
       resetForm();
     } catch (error: any) {
-        console.log('AUTH ERROR:', error);
-        console.log('AUTH ERROR CODE:', error?.code);
-        console.log('AUTH ERROR MESSAGE:', error?.message);
-      
-        let message = error?.message || 'Something went wrong. Please try again.';
-      
-        if (error?.code === 'auth/email-already-in-use') {
-          message = 'This email is already in use.';
-        } else if (error?.code === 'auth/invalid-email') {
-          message = 'This email address is invalid.';
-        } else if (error?.code === 'auth/invalid-credential') {
-          message = 'Invalid email or password.';
-        } else if (error?.code === 'auth/user-not-found') {
-          message = 'User not found.';
-        } else if (error?.code === 'auth/wrong-password') {
-          message = 'Incorrect password.';
-        } else if (error?.code === 'auth/too-many-requests') {
-          message = 'Too many attempts. Please try again later.';
-        }
-      
-        Alert.alert('Authentication error', `${error?.code || 'unknown'}\n${message}`);
-      } finally {
+      console.log('AUTH ERROR:', error);
+      console.log('AUTH ERROR CODE:', error?.code);
+      console.log('AUTH ERROR MESSAGE:', error?.message);
+
+      let message = error?.message || t('auth.errorGeneric');
+
+      if (error?.code === 'auth/email-already-in-use') {
+        message = t('auth.errorEmailInUse');
+      } else if (error?.code === 'auth/invalid-email') {
+        message = t('auth.errorInvalidEmail');
+      } else if (error?.code === 'auth/invalid-credential') {
+        message = t('auth.errorInvalidCredential');
+      } else if (error?.code === 'auth/user-not-found') {
+        message = t('auth.errorUserNotFound');
+      } else if (error?.code === 'auth/wrong-password') {
+        message = t('auth.errorWrongPassword');
+      } else if (error?.code === 'auth/too-many-requests') {
+        message = t('auth.errorTooManyRequests');
+      }
+
+      Alert.alert(t('auth.errorTitle'), `${error?.code || 'unknown'}\n${message}`);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -111,11 +122,47 @@ export default function AuthScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.container}>
-          <Text style={styles.title}>EasyBill</Text>
+          <Text style={styles.languageSectionLabel}>{t('language.sectionTitle')}</Text>
+          <View style={styles.languageRow}>
+            <Pressable
+              style={[
+                styles.languageButton,
+                currentLang === 'en' && styles.languageButtonActive,
+              ]}
+              onPress={() => void handleLanguage('en')}
+              disabled={isSubmitting}
+            >
+              <Text
+                style={[
+                  styles.languageButtonText,
+                  currentLang === 'en' && styles.languageButtonTextActive,
+                ]}
+              >
+                {t('language.english')}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.languageButton,
+                currentLang === 'he' && styles.languageButtonActive,
+              ]}
+              onPress={() => void handleLanguage('he')}
+              disabled={isSubmitting}
+            >
+              <Text
+                style={[
+                  styles.languageButtonText,
+                  currentLang === 'he' && styles.languageButtonTextActive,
+                ]}
+              >
+                {t('language.hebrew')}
+              </Text>
+            </Pressable>
+          </View>
+
+          <Text style={styles.title}>{t('auth.title')}</Text>
           <Text style={styles.subtitle}>
-            {isLogin
-              ? 'Sign in to manage your apartment bills'
-              : 'Create your account to get started'}
+            {isLogin ? t('auth.subtitleLogin') : t('auth.subtitleRegister')}
           </Text>
 
           <View style={styles.toggleRow}>
@@ -130,7 +177,7 @@ export default function AuthScreen() {
                   isLogin && styles.toggleButtonTextActive,
                 ]}
               >
-                Login
+                {t('auth.login')}
               </Text>
             </Pressable>
 
@@ -145,29 +192,29 @@ export default function AuthScreen() {
                   !isLogin && styles.toggleButtonTextActive,
                 ]}
               >
-                Register
+                {t('auth.register')}
               </Text>
             </Pressable>
           </View>
 
           {!isLogin && (
             <View style={styles.inputWrapper}>
-              <Text style={styles.label}>Full name</Text>
+              <Text style={styles.label}>{t('auth.fullName')}</Text>
               <TextInput
                 value={fullName}
                 onChangeText={setFullName}
-                placeholder="Enter your full name"
+                placeholder={t('auth.placeholderFullName')}
                 style={styles.input}
               />
             </View>
           )}
 
           <View style={styles.inputWrapper}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t('auth.email')}</Text>
             <TextInput
               value={email}
               onChangeText={setEmail}
-              placeholder="Enter your email"
+              placeholder={t('auth.placeholderEmail')}
               autoCapitalize="none"
               keyboardType="email-address"
               style={styles.input}
@@ -175,11 +222,11 @@ export default function AuthScreen() {
           </View>
 
           <View style={styles.inputWrapper}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>{t('auth.password')}</Text>
             <TextInput
               value={password}
               onChangeText={setPassword}
-              placeholder="Enter your password"
+              placeholder={t('auth.placeholderPassword')}
               secureTextEntry
               style={styles.input}
             />
@@ -194,7 +241,7 @@ export default function AuthScreen() {
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.primaryButtonText}>
-                {isLogin ? 'Login' : 'Create Account'}
+                {isLogin ? t('auth.submitLogin') : t('auth.submitRegister')}
               </Text>
             )}
           </Pressable>
@@ -218,6 +265,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 32,
     backgroundColor: '#FFFFFF',
+  },
+  languageSectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  languageRow: {
+    flexDirection: 'row',
+    backgroundColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 24,
+    gap: 4,
+  },
+  languageButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  languageButtonActive: {
+    backgroundColor: '#2563EB',
+  },
+  languageButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  languageButtonTextActive: {
+    color: '#FFFFFF',
   },
   title: {
     fontSize: 36,

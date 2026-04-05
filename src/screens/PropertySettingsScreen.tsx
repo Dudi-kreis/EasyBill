@@ -1,13 +1,7 @@
 import { doc, updateDoc } from 'firebase/firestore';
 import { useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { db } from '../../firebaseConfig';
 
 type Props = {
@@ -27,6 +21,7 @@ export default function PropertySettingsScreen({
   vatRate,
   onBack,
 }: Props) {
+  const { t } = useTranslation();
   const [electricity, setElectricity] = useState(String(electricityRate));
   const [water, setWater] = useState(String(waterRate));
   const [arnona, setArnona] = useState(String(arnonaAmount));
@@ -43,48 +38,48 @@ export default function PropertySettingsScreen({
 
       onBack();
     } catch (error) {
-      Alert.alert('Error', 'Failed to update property');
+      Alert.alert(t('propertySettings.errorTitle'), t('propertySettings.errorBody'));
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Property Settings</Text>
+      <Text style={styles.title}>{t('propertySettings.title')}</Text>
 
       <TextInput
         value={electricity}
         onChangeText={setElectricity}
-        placeholder="Electricity rate"
+        placeholder={t('propertySettings.placeholderElectricity')}
         style={styles.input}
       />
 
       <TextInput
         value={water}
         onChangeText={setWater}
-        placeholder="Water rate"
+        placeholder={t('propertySettings.placeholderWater')}
         style={styles.input}
       />
 
       <TextInput
         value={arnona}
         onChangeText={setArnona}
-        placeholder="Arnona amount"
+        placeholder={t('propertySettings.placeholderArnona')}
         style={styles.input}
       />
 
       <TextInput
         value={vat}
         onChangeText={setVat}
-        placeholder="VAT rate"
+        placeholder={t('propertySettings.placeholderVat')}
         style={styles.input}
       />
 
       <Pressable style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>Save</Text>
+        <Text style={styles.buttonText}>{t('propertySettings.save')}</Text>
       </Pressable>
 
       <Pressable style={styles.secondary} onPress={onBack}>
-        <Text>Back</Text>
+        <Text style={styles.secondaryText}>{t('propertySettings.back')}</Text>
       </Pressable>
     </View>
   );
@@ -123,5 +118,10 @@ const styles = StyleSheet.create({
   secondary: {
     marginTop: 20,
     alignItems: 'center',
+  },
+  secondaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
   },
 });

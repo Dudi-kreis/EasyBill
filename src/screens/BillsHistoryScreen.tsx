@@ -1,13 +1,7 @@
 import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 
 type BillItem = {
@@ -36,6 +30,7 @@ export default function BillsHistoryScreen({
   city,
   onBack,
 }: BillsHistoryScreenProps) {
+  const { t } = useTranslation();
   const [bills, setBills] = useState<BillItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,7 +63,7 @@ export default function BillsHistoryScreen({
 
           return {
             id: doc.id,
-            periodLabel: data.periodLabel ?? 'Unknown period',
+            periodLabel: data.periodLabel ?? t('billsHistory.unknownPeriod'),
             totalAmount: typeof data.totalAmount === 'number' ? data.totalAmount : 0,
             electricityTotal:
               typeof data.electricityTotal === 'number' ? data.electricityTotal : 0,
@@ -88,12 +83,12 @@ export default function BillsHistoryScreen({
     );
 
     return unsubscribe;
-  }, [propertyId, propertyName]);
+  }, [propertyId, propertyName, t]);
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
       <View style={styles.container}>
-        <Text style={styles.title}>Bills history</Text>
+        <Text style={styles.title}>{t('billsHistory.title')}</Text>
         <Text style={styles.subtitle}>
           {propertyName} - {city}
         </Text>
@@ -104,27 +99,29 @@ export default function BillsHistoryScreen({
           </View>
         ) : bills.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>No bills yet</Text>
-            <Text style={styles.emptySubtitle}>
-              Once you create bills for this property, they will appear here.
-            </Text>
+            <Text style={styles.emptyTitle}>{t('billsHistory.emptyTitle')}</Text>
+            <Text style={styles.emptySubtitle}>{t('billsHistory.emptySubtitle')}</Text>
           </View>
         ) : (
           <View>
             {bills.map((bill) => (
               <View key={bill.id} style={styles.billCard}>
                 <Text style={styles.billPeriod}>{bill.periodLabel}</Text>
-                <Text style={styles.billTotal}>Total: {formatAmount(bill.totalAmount)}</Text>
+                <Text style={styles.billTotal}>
+                  {t('billsHistory.billTotal', { amount: formatAmount(bill.totalAmount) })}
+                </Text>
 
                 <View style={styles.detailsBox}>
                   <Text style={styles.detailRow}>
-                    Electricity: {formatAmount(bill.electricityTotal)}
+                    {t('billsHistory.detailElectricity', {
+                      amount: formatAmount(bill.electricityTotal),
+                    })}
                   </Text>
                   <Text style={styles.detailRow}>
-                    Water: {formatAmount(bill.waterTotal)}
+                    {t('billsHistory.detailWater', { amount: formatAmount(bill.waterTotal) })}
                   </Text>
                   <Text style={styles.detailRow}>
-                    Arnona: {formatAmount(bill.arnonaAmount)}
+                    {t('billsHistory.detailArnona', { amount: formatAmount(bill.arnonaAmount) })}
                   </Text>
                 </View>
               </View>
@@ -133,7 +130,7 @@ export default function BillsHistoryScreen({
         )}
 
         <Pressable style={styles.secondaryButton} onPress={onBack}>
-          <Text style={styles.secondaryButtonText}>Back</Text>
+          <Text style={styles.secondaryButtonText}>{t('billsHistory.back')}</Text>
         </Pressable>
       </View>
     </ScrollView>

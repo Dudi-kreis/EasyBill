@@ -6,6 +6,7 @@ import { auth, db } from '../firebaseConfig';
 
 import AuthScreen from '../src/screens/AuthScreen';
 import BillsHistoryScreen from '../src/screens/BillsHistoryScreen';
+import { BillSummaryScreen } from '../src/screens/BillSummaryScreen';
 import CreatePropertyScreen from '../src/screens/CreatePropertyScreen';
 import HomeScreen from '../src/screens/HomeScreen';
 import NewBillScreen from '../src/screens/NewBillScreen';
@@ -28,10 +29,22 @@ type ActiveScreen =
   | 'propertyDashboard'
   | 'propertySettings'
   | 'newBill'
-  | 'billsHistory';
+  | 'billsHistory'
+  | 'billSummary';
   
 export default function Index() {
   const [user, setUser] = useState<User | null>(null);
+  const [latestBillSummary, setLatestBillSummary] = useState<{
+    propertyName: string;
+    city: string;
+    periodLabel: string;
+    electricityTotal: number;
+    waterTotal: number;
+    arnonaAmount: number;
+    vatRate: number | null;
+    vatAmount: number;
+    totalAmount: number;
+  } | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loadingProperties, setLoadingProperties] = useState(false);
   const [properties, setProperties] = useState<PropertyItem[]>([]);
@@ -157,7 +170,6 @@ export default function Index() {
       />
     );
   }
-
   if (activeScreen === 'newBill' && selectedProperty) {
     return (
       <NewBillScreen
@@ -170,6 +182,10 @@ export default function Index() {
         vatRate={selectedProperty.vatRate}
         onBack={() => {
           setActiveScreen('propertyDashboard');
+        }}
+        onSaved={(billSummary) => {
+          setLatestBillSummary(billSummary);
+          setActiveScreen('billSummary');
         }}
       />
     );
@@ -197,6 +213,24 @@ export default function Index() {
         propertyId={selectedProperty.id}
         propertyName={selectedProperty.propertyName}
         city={selectedProperty.city}
+        onBack={() => {
+          setActiveScreen('propertyDashboard');
+        }}
+      />
+    );
+  }
+  if (activeScreen === 'billSummary' && latestBillSummary) {
+    return (
+      <BillSummaryScreen
+        propertyName={latestBillSummary.propertyName}
+        city={latestBillSummary.city}
+        periodLabel={latestBillSummary.periodLabel}
+        electricityTotal={latestBillSummary.electricityTotal}
+        waterTotal={latestBillSummary.waterTotal}
+        arnonaAmount={latestBillSummary.arnonaAmount}
+        vatRate={latestBillSummary.vatRate}
+        vatAmount={latestBillSummary.vatAmount}
+        totalAmount={latestBillSummary.totalAmount}
         onBack={() => {
           setActiveScreen('propertyDashboard');
         }}

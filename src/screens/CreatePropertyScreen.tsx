@@ -1,5 +1,6 @@
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
@@ -27,6 +28,7 @@ export default function CreatePropertyScreen({
   onCreated,
   onCancel,
 }: CreatePropertyScreenProps) {
+  const { t } = useTranslation();
   const [propertyName, setPropertyName] = useState('');
   const [city, setCity] = useState('');
   const [electricityRate, setElectricityRate] = useState('');
@@ -44,37 +46,40 @@ export default function CreatePropertyScreen({
     const user = auth.currentUser;
 
     if (!user) {
-      Alert.alert('Error', 'No logged in user found.');
+      Alert.alert(t('createProperty.errorCreateTitle'), t('createProperty.errorNoUser'));
       return;
     }
 
     if (propertyCount >= MAX_PROPERTIES) {
-      Alert.alert('Limit reached', 'You can add up to 3 properties only.');
+      Alert.alert(t('createProperty.errorLimitTitle'), t('createProperty.errorLimitBody'));
       return;
     }
 
     if (!propertyName.trim()) {
-      Alert.alert('Missing property name', 'Please enter a property name.');
+      Alert.alert(t('createProperty.errorMissingNameTitle'), t('createProperty.errorMissingNameBody'));
       return;
     }
 
     if (!city.trim()) {
-      Alert.alert('Missing city', 'Please enter a city.');
+      Alert.alert(t('createProperty.errorMissingCityTitle'), t('createProperty.errorMissingCityBody'));
       return;
     }
 
     if (!electricityRate.trim()) {
-      Alert.alert('Missing electricity rate', 'Please enter electricity rate.');
+      Alert.alert(
+        t('createProperty.errorMissingElectricityTitle'),
+        t('createProperty.errorMissingElectricityBody')
+      );
       return;
     }
 
     if (!waterRate.trim()) {
-      Alert.alert('Missing water rate', 'Please enter water rate.');
+      Alert.alert(t('createProperty.errorMissingWaterTitle'), t('createProperty.errorMissingWaterBody'));
       return;
     }
 
     if (!arnonaAmount.trim()) {
-      Alert.alert('Missing arnona amount', 'Please enter arnona amount.');
+      Alert.alert(t('createProperty.errorMissingArnonaTitle'), t('createProperty.errorMissingArnonaBody'));
       return;
     }
 
@@ -83,17 +88,20 @@ export default function CreatePropertyScreen({
     const parsedArnonaAmount = parseNumber(arnonaAmount);
 
     if (Number.isNaN(parsedElectricityRate)) {
-      Alert.alert('Invalid electricity rate', 'Electricity rate must be a valid number.');
+      Alert.alert(
+        t('createProperty.errorInvalidElectricityTitle'),
+        t('createProperty.errorInvalidElectricityBody')
+      );
       return;
     }
 
     if (Number.isNaN(parsedWaterRate)) {
-      Alert.alert('Invalid water rate', 'Water rate must be a valid number.');
+      Alert.alert(t('createProperty.errorInvalidWaterTitle'), t('createProperty.errorInvalidWaterBody'));
       return;
     }
 
     if (Number.isNaN(parsedArnonaAmount)) {
-      Alert.alert('Invalid arnona amount', 'Arnona amount must be a valid number.');
+      Alert.alert(t('createProperty.errorInvalidArnonaTitle'), t('createProperty.errorInvalidArnonaBody'));
       return;
     }
 
@@ -103,7 +111,7 @@ export default function CreatePropertyScreen({
       parsedVatRate = parseNumber(vatRate);
 
       if (Number.isNaN(parsedVatRate)) {
-        Alert.alert('Invalid VAT rate', 'VAT rate must be a valid number.');
+        Alert.alert(t('createProperty.errorInvalidVatTitle'), t('createProperty.errorInvalidVatBody'));
         return;
       }
     }
@@ -124,7 +132,10 @@ export default function CreatePropertyScreen({
 
       onCreated();
     } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to create property.');
+      Alert.alert(
+        t('createProperty.errorCreateTitle'),
+        error?.message || t('createProperty.errorCreateBody')
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -142,39 +153,40 @@ export default function CreatePropertyScreen({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.container}>
-          <Text style={styles.title}>Add New Property</Text>
+          <Text style={styles.title}>{t('createProperty.title')}</Text>
           <Text style={styles.subtitle}>
             {reachedLimit
-              ? 'You already reached the maximum of 3 properties.'
-              : `Property ${propertyCount + 1} of ${MAX_PROPERTIES}`}
+              ? t('createProperty.subtitleLimit')
+              : t('createProperty.subtitleCount', {
+                  current: propertyCount + 1,
+                  max: MAX_PROPERTIES,
+                })}
           </Text>
 
           {reachedLimit ? (
             <View style={styles.limitBox}>
-              <Text style={styles.limitText}>
-                You can add up to 3 properties only.
-              </Text>
+              <Text style={styles.limitText}>{t('createProperty.limitText')}</Text>
             </View>
           ) : (
             <>
               <TextInput
                 value={propertyName}
                 onChangeText={setPropertyName}
-                placeholder="Property name"
+                placeholder={t('createProperty.placeholderName')}
                 style={styles.input}
               />
 
               <TextInput
                 value={city}
                 onChangeText={setCity}
-                placeholder="City"
+                placeholder={t('createProperty.placeholderCity')}
                 style={styles.input}
               />
 
               <TextInput
                 value={electricityRate}
                 onChangeText={setElectricityRate}
-                placeholder="Electricity rate"
+                placeholder={t('createProperty.placeholderElectricity')}
                 keyboardType="numeric"
                 style={styles.input}
               />
@@ -182,7 +194,7 @@ export default function CreatePropertyScreen({
               <TextInput
                 value={waterRate}
                 onChangeText={setWaterRate}
-                placeholder="Water rate"
+                placeholder={t('createProperty.placeholderWater')}
                 keyboardType="numeric"
                 style={styles.input}
               />
@@ -190,7 +202,7 @@ export default function CreatePropertyScreen({
               <TextInput
                 value={arnonaAmount}
                 onChangeText={setArnonaAmount}
-                placeholder="Arnona amount"
+                placeholder={t('createProperty.placeholderArnona')}
                 keyboardType="numeric"
                 style={styles.input}
               />
@@ -198,7 +210,7 @@ export default function CreatePropertyScreen({
               <TextInput
                 value={vatRate}
                 onChangeText={setVatRate}
-                placeholder="VAT rate (optional)"
+                placeholder={t('createProperty.placeholderVat')}
                 keyboardType="numeric"
                 style={styles.input}
               />
@@ -211,7 +223,7 @@ export default function CreatePropertyScreen({
                 {isSubmitting ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.buttonText}>Create Property</Text>
+                  <Text style={styles.buttonText}>{t('createProperty.submit')}</Text>
                 )}
               </Pressable>
             </>
@@ -223,7 +235,7 @@ export default function CreatePropertyScreen({
               onPress={onCancel}
               disabled={isSubmitting}
             >
-              <Text style={styles.secondaryButtonText}>Back</Text>
+              <Text style={styles.secondaryButtonText}>{t('createProperty.back')}</Text>
             </Pressable>
           ) : null}
         </View>

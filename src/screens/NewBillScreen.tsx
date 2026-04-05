@@ -1,16 +1,17 @@
 import { addDoc, collection, getDocs, limit, orderBy, query, serverTimestamp, where } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 
@@ -23,22 +24,18 @@ type NewBillScreenProps = {
   arnonaAmount: number;
   vatRate: number | null;
   onBack: () => void;
+  onSaved: (billSummary: {
+    propertyName: string;
+    city: string;
+    periodLabel: string;
+    electricityTotal: number;
+    waterTotal: number;
+    arnonaAmount: number;
+    vatRate: number | null;
+    vatAmount: number;
+    totalAmount: number;
+  }) => void;
 };
-
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
 
 const YEARS = [2025, 2026, 2027, 2028];
 
@@ -54,8 +51,10 @@ export default function NewBillScreen({
   waterRate,
   arnonaAmount,
   vatRate,
+  onSaved,
   onBack,
 }: NewBillScreenProps) {
+  const { t, i18n } = useTranslation();
   const [periodType, setPeriodType] = useState<1 | 2>(2);
   const [startMonth, setStartMonth] = useState(new Date().getMonth());
   const [startYear, setStartYear] = useState(new Date().getFullYear());
@@ -67,6 +66,11 @@ export default function NewBillScreen({
 
   const [loadingPrevious, setLoadingPrevious] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const monthNames = useMemo(
+    () => t('newBill.monthNames', { returnObjects: true }) as string[],
+    [t, i18n.language]
+  );
 
   useEffect(() => {
     const loadLastBill = async () => {
@@ -105,18 +109,18 @@ export default function NewBillScreen({
 
   const periodLabel = useMemo(() => {
     if (periodType === 1) {
-      return `${MONTHS[startMonth]} ${startYear}`;
+      return `${monthNames[startMonth]} ${startYear}`;
     }
 
     const endMonth = (startMonth + 1) % 12;
     const endYear = startMonth === 11 ? startYear + 1 : startYear;
 
     if (startYear === endYear) {
-      return `${MONTHS[startMonth]} - ${MONTHS[endMonth]} ${startYear}`;
+      return `${monthNames[startMonth]} - ${monthNames[endMonth]} ${startYear}`;
     }
 
-    return `${MONTHS[startMonth]} ${startYear} - ${MONTHS[endMonth]} ${endYear}`;
-  }, [periodType, startMonth, startYear]);
+    return `${monthNames[startMonth]} ${startYear} - ${monthNames[endMonth]} ${endYear}`;
+  }, [periodType, startMonth, startYear, monthNames]);
 
   const parsedPreviousElectricity = Number(previousElectricityMeter || 0);
   const parsedCurrentElectricity = Number(currentElectricityMeter || 0);
@@ -150,47 +154,47 @@ export default function NewBillScreen({
     const user = auth.currentUser;
 
     if (!user) {
-      Alert.alert('Error', 'No logged in user found.');
+      Alert.alert(t('newBill.errorSaveTitle'), t('newBill.errorNoUser'));
       return;
     }
 
     if (!previousElectricityMeter.trim()) {
-      Alert.alert('Missing previous electricity meter', 'Please enter previous electricity meter.');
+      Alert.alert(t('newBill.errorPrevElectricityTitle'), t('newBill.errorPrevElectricityBody'));
       return;
     }
 
     if (!currentElectricityMeter.trim()) {
-      Alert.alert('Missing current electricity meter', 'Please enter current electricity meter.');
+      Alert.alert(t('newBill.errorCurrElectricityTitle'), t('newBill.errorCurrElectricityBody'));
       return;
     }
 
     if (!previousWaterMeter.trim()) {
-      Alert.alert('Missing previous water meter', 'Please enter previous water meter.');
+      Alert.alert(t('newBill.errorPrevWaterTitle'), t('newBill.errorPrevWaterBody'));
       return;
     }
 
     if (!currentWaterMeter.trim()) {
-      Alert.alert('Missing current water meter', 'Please enter current water meter.');
+      Alert.alert(t('newBill.errorCurrWaterTitle'), t('newBill.errorCurrWaterBody'));
       return;
     }
 
     if (Number.isNaN(parsedPreviousElectricity) || Number.isNaN(parsedCurrentElectricity)) {
-      Alert.alert('Invalid electricity meter', 'Electricity meter values must be valid numbers.');
+      Alert.alert(t('newBill.errorInvalidElectricityTitle'), t('newBill.errorInvalidElectricityBody'));
       return;
     }
 
     if (Number.isNaN(parsedPreviousWater) || Number.isNaN(parsedCurrentWater)) {
-      Alert.alert('Invalid water meter', 'Water meter values must be valid numbers.');
+      Alert.alert(t('newBill.errorInvalidWaterTitle'), t('newBill.errorInvalidWaterBody'));
       return;
     }
 
     if (parsedCurrentElectricity < parsedPreviousElectricity) {
-      Alert.alert('Invalid electricity meter', 'Current electricity meter cannot be lower than previous meter.');
+      Alert.alert(t('newBill.errorElectricityOrderTitle'), t('newBill.errorElectricityOrderBody'));
       return;
     }
 
     if (parsedCurrentWater < parsedPreviousWater) {
-      Alert.alert('Invalid water meter', 'Current water meter cannot be lower than previous meter.');
+      Alert.alert(t('newBill.errorWaterOrderTitle'), t('newBill.errorWaterOrderBody'));
       return;
     }
 
@@ -224,9 +228,19 @@ export default function NewBillScreen({
         createdAt: serverTimestamp(),
       });
 
-      onBack();
+      onSaved({
+        propertyName,
+        city,
+        periodLabel,
+        electricityTotal,
+        waterTotal,
+        arnonaAmount,
+        vatRate,
+        vatAmount,
+        totalAmount,
+      });
     } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Failed to save bill.');
+      Alert.alert(t('newBill.errorSaveTitle'), error?.message || t('newBill.errorSaveBody'));
     } finally {
       setIsSubmitting(false);
     }
@@ -242,12 +256,12 @@ export default function NewBillScreen({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.container}>
-          <Text style={styles.title}>New bill</Text>
+          <Text style={styles.title}>{t('newBill.title')}</Text>
           <Text style={styles.subtitle}>
             {propertyName} · {city}
           </Text>
 
-          <Text style={styles.sectionTitle}>Billing period</Text>
+          <Text style={styles.sectionTitle}>{t('newBill.billingPeriod')}</Text>
 
           <View style={styles.row}>
             <Pressable
@@ -263,7 +277,7 @@ export default function NewBillScreen({
                   periodType === 1 && styles.segmentButtonTextActive,
                 ]}
               >
-                1 month
+                {t('newBill.oneMonth')}
               </Text>
             </Pressable>
 
@@ -280,20 +294,17 @@ export default function NewBillScreen({
                   periodType === 2 && styles.segmentButtonTextActive,
                 ]}
               >
-                2 months
+                {t('newBill.twoMonths')}
               </Text>
             </Pressable>
           </View>
 
-          <Text style={styles.fieldLabel}>Start month</Text>
+          <Text style={styles.fieldLabel}>{t('newBill.startMonth')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow}>
-            {MONTHS.map((month, index) => (
+            {monthNames.map((month, index) => (
               <Pressable
                 key={month}
-                style={[
-                  styles.chip,
-                  startMonth === index && styles.chipActive,
-                ]}
+                style={[styles.chip, startMonth === index && styles.chipActive]}
                 onPress={() => setStartMonth(index)}
               >
                 <Text
@@ -308,15 +319,12 @@ export default function NewBillScreen({
             ))}
           </ScrollView>
 
-          <Text style={styles.fieldLabel}>Year</Text>
+          <Text style={styles.fieldLabel}>{t('newBill.year')}</Text>
           <View style={styles.row}>
             {YEARS.map((year) => (
               <Pressable
                 key={year}
-                style={[
-                  styles.yearButton,
-                  startYear === year && styles.yearButtonActive,
-                ]}
+                style={[styles.yearButton, startYear === year && styles.yearButtonActive]}
                 onPress={() => setStartYear(year)}
               >
                 <Text
@@ -332,11 +340,11 @@ export default function NewBillScreen({
           </View>
 
           <View style={styles.periodBox}>
-            <Text style={styles.periodBoxLabel}>Selected period</Text>
+            <Text style={styles.periodBoxLabel}>{t('newBill.selectedPeriod')}</Text>
             <Text style={styles.periodBoxValue}>{periodLabel}</Text>
           </View>
 
-          <Text style={styles.sectionTitle}>Electricity</Text>
+          <Text style={styles.sectionTitle}>{t('newBill.electricity')}</Text>
 
           {loadingPrevious ? (
             <ActivityIndicator color="#2563EB" />
@@ -345,7 +353,7 @@ export default function NewBillScreen({
           <TextInput
             value={previousElectricityMeter}
             onChangeText={setPreviousElectricityMeter}
-            placeholder="Previous electricity meter"
+            placeholder={t('newBill.placeholderPrevElectricity')}
             keyboardType="numeric"
             style={styles.input}
           />
@@ -353,23 +361,23 @@ export default function NewBillScreen({
           <TextInput
             value={currentElectricityMeter}
             onChangeText={setCurrentElectricityMeter}
-            placeholder="Current electricity meter"
+            placeholder={t('newBill.placeholderCurrElectricity')}
             keyboardType="numeric"
             style={styles.input}
           />
 
           <View style={styles.summaryBox}>
-            <Text style={styles.summaryRow}>Usage: {electricityUsage}</Text>
-            <Text style={styles.summaryRow}>Rate: {electricityRate}</Text>
-            <Text style={styles.summaryRow}>Total: {electricityTotal}</Text>
+            <Text style={styles.summaryRow}>{t('newBill.usage', { value: electricityUsage })}</Text>
+            <Text style={styles.summaryRow}>{t('newBill.rate', { value: electricityRate })}</Text>
+            <Text style={styles.summaryRow}>{t('newBill.total', { value: electricityTotal })}</Text>
           </View>
 
-          <Text style={styles.sectionTitle}>Water</Text>
+          <Text style={styles.sectionTitle}>{t('newBill.water')}</Text>
 
           <TextInput
             value={previousWaterMeter}
             onChangeText={setPreviousWaterMeter}
-            placeholder="Previous water meter"
+            placeholder={t('newBill.placeholderPrevWater')}
             keyboardType="numeric"
             style={styles.input}
           />
@@ -377,27 +385,31 @@ export default function NewBillScreen({
           <TextInput
             value={currentWaterMeter}
             onChangeText={setCurrentWaterMeter}
-            placeholder="Current water meter"
+            placeholder={t('newBill.placeholderCurrWater')}
             keyboardType="numeric"
             style={styles.input}
           />
 
           <View style={styles.summaryBox}>
-            <Text style={styles.summaryRow}>Usage: {waterUsage}</Text>
-            <Text style={styles.summaryRow}>Rate: {waterRate}</Text>
-            <Text style={styles.summaryRow}>Total: {waterTotal}</Text>
+            <Text style={styles.summaryRow}>{t('newBill.usage', { value: waterUsage })}</Text>
+            <Text style={styles.summaryRow}>{t('newBill.rate', { value: waterRate })}</Text>
+            <Text style={styles.summaryRow}>{t('newBill.total', { value: waterTotal })}</Text>
           </View>
 
-          <Text style={styles.sectionTitle}>Summary</Text>
+          <Text style={styles.sectionTitle}>{t('newBill.summary')}</Text>
 
           <View style={styles.summaryBox}>
-            <Text style={styles.summaryRow}>Electricity: {electricityTotal}</Text>
-            <Text style={styles.summaryRow}>Water: {waterTotal}</Text>
-            <Text style={styles.summaryRow}>Arnona: {arnonaAmount}</Text>
             <Text style={styles.summaryRow}>
-              VAT: {vatRate !== null ? `${vatRate}% (${vatAmount})` : 'Not applied'}
+              {t('newBill.lineElectricity', { value: electricityTotal })}
             </Text>
-            <Text style={styles.totalRow}>Total: {totalAmount}</Text>
+            <Text style={styles.summaryRow}>{t('newBill.lineWater', { value: waterTotal })}</Text>
+            <Text style={styles.summaryRow}>{t('newBill.lineArnona', { value: arnonaAmount })}</Text>
+            <Text style={styles.summaryRow}>
+              {vatRate !== null
+                ? t('newBill.vatSummaryWithRate', { rate: vatRate, amount: vatAmount })
+                : t('newBill.vatSummaryNone')}
+            </Text>
+            <Text style={styles.totalRow}>{t('newBill.total', { value: totalAmount })}</Text>
           </View>
 
           <Pressable
@@ -408,12 +420,12 @@ export default function NewBillScreen({
             {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.primaryButtonText}>Save bill</Text>
+              <Text style={styles.primaryButtonText}>{t('newBill.saveBill')}</Text>
             )}
           </Pressable>
 
           <Pressable style={styles.secondaryButton} onPress={onBack} disabled={isSubmitting}>
-            <Text style={styles.secondaryButtonText}>Back</Text>
+            <Text style={styles.secondaryButtonText}>{t('newBill.back')}</Text>
           </Pressable>
         </View>
       </ScrollView>

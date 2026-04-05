@@ -1,6 +1,8 @@
 import { signOut } from 'firebase/auth';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { auth } from '../../firebaseConfig';
+import { AppLanguage, setAppLanguage } from '../i18n';
 
 type PropertyItem = {
   id: string;
@@ -21,8 +23,18 @@ export default function HomeScreen({
   onAddProperty,
   onOpenProperty,
 }: HomeScreenProps) {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language.startsWith('he') ? 'he' : 'en';
+
   const handleLogout = async () => {
     await signOut(auth);
+  };
+
+  const handleLanguage = async (lng: AppLanguage) => {
+    if (lng === currentLang) {
+      return;
+    }
+    await setAppLanguage(lng);
   };
 
   const hasProperties = properties.length > 0;
@@ -31,24 +43,58 @@ export default function HomeScreen({
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
       <View style={styles.container}>
-        <Text style={styles.screenTitle}>Home</Text>
-        <Text style={styles.screenSubtitle}>Manage your properties</Text>
+        <Text style={styles.screenTitle}>{t('home.title')}</Text>
+        <Text style={styles.screenSubtitle}>{t('home.subtitle')}</Text>
+
+        <Text style={styles.languageSectionLabel}>{t('language.sectionTitle')}</Text>
+        <View style={styles.languageRow}>
+          <Pressable
+            style={[
+              styles.languageButton,
+              currentLang === 'en' && styles.languageButtonActive,
+            ]}
+            onPress={() => void handleLanguage('en')}
+          >
+            <Text
+              style={[
+                styles.languageButtonText,
+                currentLang === 'en' && styles.languageButtonTextActive,
+              ]}
+            >
+              {t('language.english')}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.languageButton,
+              currentLang === 'he' && styles.languageButtonActive,
+            ]}
+            onPress={() => void handleLanguage('he')}
+          >
+            <Text
+              style={[
+                styles.languageButtonText,
+                currentLang === 'he' && styles.languageButtonTextActive,
+              ]}
+            >
+              {t('language.hebrew')}
+            </Text>
+          </Pressable>
+        </View>
 
         {!hasProperties ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>No properties yet</Text>
-            <Text style={styles.emptySubtitle}>
-              Add your first property to start using EasyBill.
-            </Text>
+            <Text style={styles.emptyTitle}>{t('home.emptyTitle')}</Text>
+            <Text style={styles.emptySubtitle}>{t('home.emptySubtitle')}</Text>
 
             <Pressable style={styles.primaryButton} onPress={onAddProperty}>
-              <Text style={styles.primaryButtonText}>Add new property</Text>
+              <Text style={styles.primaryButtonText}>{t('home.addProperty')}</Text>
             </Pressable>
           </View>
         ) : (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Your properties</Text>
+              <Text style={styles.sectionTitle}>{t('home.yourProperties')}</Text>
               <Text style={styles.sectionCount}>
                 {properties.length}/{MAX_PROPERTIES}
               </Text>
@@ -67,20 +113,18 @@ export default function HomeScreen({
 
             {!reachedLimit ? (
               <Pressable style={styles.primaryButton} onPress={onAddProperty}>
-                <Text style={styles.primaryButtonText}>Add new property</Text>
+                <Text style={styles.primaryButtonText}>{t('home.addProperty')}</Text>
               </Pressable>
             ) : (
               <View style={styles.limitBox}>
-                <Text style={styles.limitText}>
-                  You can add up to 3 properties only.
-                </Text>
+                <Text style={styles.limitText}>{t('home.limitText')}</Text>
               </View>
             )}
           </>
         )}
 
         <Pressable style={styles.secondaryButton} onPress={handleLogout}>
-          <Text style={styles.secondaryButtonText}>Log out</Text>
+          <Text style={styles.secondaryButtonText}>{t('home.logOut')}</Text>
         </Pressable>
       </View>
     </ScrollView>
@@ -106,7 +150,38 @@ const styles = StyleSheet.create({
   screenSubtitle: {
     fontSize: 16,
     color: '#6B7280',
+    marginBottom: 16,
+  },
+  languageSectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  languageRow: {
+    flexDirection: 'row',
+    backgroundColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 4,
     marginBottom: 24,
+    gap: 4,
+  },
+  languageButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  languageButtonActive: {
+    backgroundColor: '#2563EB',
+  },
+  languageButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  languageButtonTextActive: {
+    color: '#FFFFFF',
   },
   emptyCard: {
     backgroundColor: '#FFFFFF',

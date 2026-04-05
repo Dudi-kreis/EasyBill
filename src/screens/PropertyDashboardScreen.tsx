@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 type PropertyDashboardProps = {
@@ -17,25 +18,27 @@ export default function PropertyDashboardScreen({
   onOpenSettings,
   onBack,
 }: PropertyDashboardProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{propertyName}</Text>
       <Text style={styles.subtitle}>{city}</Text>
 
       <Pressable style={styles.button} onPress={onOpenNewBill}>
-        <Text style={styles.buttonText}>New bill</Text>
+        <Text style={styles.buttonText}>{t('dashboard.newBill')}</Text>
       </Pressable>
 
       <Pressable style={styles.button} onPress={onOpenBillsHistory}>
-        <Text style={styles.buttonText}>Bills history</Text>
+        <Text style={styles.buttonText}>{t('dashboard.billsHistory')}</Text>
       </Pressable>
 
       <Pressable style={styles.button} onPress={onOpenSettings}>
-        <Text style={styles.buttonText}>Property settings</Text>
+        <Text style={styles.buttonText}>{t('dashboard.propertySettings')}</Text>
       </Pressable>
 
       <Pressable style={styles.secondaryButton} onPress={onBack}>
-        <Text style={styles.secondaryButtonText}>Back</Text>
+        <Text style={styles.secondaryButtonText}>{t('dashboard.back')}</Text>
       </Pressable>
     </View>
   );
